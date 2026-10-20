@@ -1,0 +1,1306 @@
+<!DOCTYPE html>
+<html lang="th" class="h-full bg-slate-900 text-slate-100">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SQL Master Quiz & Lab - Chapter 3 & 4 Special Edition</title>
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- FontAwesome CDN for Icons -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <!-- AlaSQL Library for Client-side SQL Engine -->
+  <script src="https://cdn.jsdelivr.net/npm/alasql@4"></script>
+  <!-- Google Fonts: Inter & Kanit -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Kanit:wght@300;400;500;600;700&family=Fira+Code:wght@400;500;600&display=swap" rel="stylesheet">
+  
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['Kanit', 'sans-serif'],
+            mono: ['Fira Code', 'monospace'],
+          },
+          colors: {
+            brand: {
+              50: '#f0f9ff',
+              100: '#e0f2fe',
+              500: '#0ea5e9',
+              600: '#0284c7',
+              700: '#0369a1',
+            }
+          }
+        }
+      }
+    }
+  </script>
+  <style>
+    /* Custom scrollbar for tables & code editors */
+    ::-webkit-scrollbar {
+      width: 8px;
+      height: 8px;
+    }
+    ::-webkit-scrollbar-track {
+      background: #1e293b;
+    }
+    ::-webkit-scrollbar-thumb {
+      background: #475569;
+      border-radius: 4px;
+    }
+    ::-webkit-scrollbar-thumb:hover {
+      background: #64748b;
+    }
+  </style>
+</head>
+<body class="h-full flex flex-col font-sans overflow-x-hidden antialiased">
+
+  <header class="bg-slate-800 border-b border-slate-700 sticky top-0 z-50 shadow-md">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div class="flex items-center justify-between h-16 flex-wrap sm:flex-nowrap gap-2 py-2 sm:py-0">
+        <div class="flex items-center space-x-3">
+          <div class="bg-brand-600 text-white p-2.5 rounded-xl shadow-lg shadow-brand-500/20">
+            <i class="fa-solid fa-database text-xl"></i>
+          </div>
+          <div>
+            <h1 class="text-xl font-bold bg-gradient-to-r from-sky-400 to-emerald-400 bg-clip-text text-transparent">
+              SQL Master Quiz & Lab
+            </h1>
+            <p class="text-xs text-slate-400">คลังข้อสอบสุ่ม Chapter 3 & 4 (อัตนัย 20 ข้อ + ปรนัย 20 ข้อ)</p>
+          </div>
+        </div>
+
+        <nav class="flex space-x-1 sm:space-x-2 overflow-x-auto w-full sm:w-auto pb-1 sm:pb-0">
+          <button id="nav-code-exam-btn" onclick="switchTab('code-exam')" class="px-3 py-2 rounded-lg text-xs sm:text-sm font-medium transition duration-200 bg-brand-600 text-white shadow-md whitespace-nowrap">
+            <i class="fa-solid fa-code mr-1.5"></i>เขียน SQL (Coding)
+          </button>
+          <button id="nav-quiz-btn" onclick="switchTab('quiz')" class="px-3 py-2 rounded-lg text-xs sm:text-sm font-medium text-slate-300 hover:bg-slate-700 hover:text-white transition duration-200 whitespace-nowrap">
+            <i class="fa-solid fa-list-check mr-1.5"></i>ข้อสอบปรนัย (MCQ)
+          </button>
+          <button id="nav-sandbox-btn" onclick="switchTab('sandbox')" class="px-3 py-2 rounded-lg text-xs sm:text-sm font-medium text-slate-300 hover:bg-slate-700 hover:text-white transition duration-200 whitespace-nowrap">
+            <i class="fa-solid fa-terminal mr-1.5"></i>SQL Sandbox
+          </button>
+          <button id="nav-db-btn" onclick="switchTab('database')" class="px-3 py-2 rounded-lg text-xs sm:text-sm font-medium text-slate-300 hover:bg-slate-700 hover:text-white transition duration-200 whitespace-nowrap">
+            <i class="fa-solid fa-table mr-1.5"></i>ดูข้อมูลตาราง
+          </button>
+        </nav>
+      </div>
+    </div>
+  </header>
+
+  <main class="flex-1 max-w-7xl w-full mx-auto p-4 sm:p-6 lg:p-8 flex flex-col">
+
+    <!-- ========================================================================= -->
+    <!-- TAB 1: HANDS-ON SQL CODING EXAM -->
+    <!-- ========================================================================= -->
+    <div id="tab-code-exam" class="space-y-6 flex-1 flex flex-col">
+      <!-- Exam Control Header -->
+      <div class="bg-slate-800 p-4 rounded-xl border border-slate-700 flex flex-wrap items-center justify-between gap-4">
+        <div class="flex items-center space-x-3 flex-wrap gap-2">
+          <span class="text-sm text-slate-400">หมวดหมู่ข้อสอบปฏิบัติ:</span>
+          <select id="code-exam-filter" onchange="filterCodeExam()" class="bg-slate-900 border border-slate-700 text-slate-200 text-sm rounded-lg px-3 py-2 focus:ring-2 focus:ring-brand-500 focus:outline-none">
+            <option value="all">ทั้งหมด (20 ข้อ)</option>
+            <option value="ch3">Chapter 3: Basic SELECT, WHERE, ORDER BY, DML (10 ข้อ)</option>
+            <option value="ch4">Chapter 4: JOIN, Aggregate & GROUP BY (10 ข้อ)</option>
+          </select>
+          <button onclick="randomizeCodingQuestions()" class="text-xs bg-brand-600 hover:bg-brand-500 text-white font-medium px-3 py-2 rounded-lg transition shadow flex items-center">
+            <i class="fa-solid fa-shuffle mr-1.5"></i>สุ่มสลับโจทย์ (Randomize)
+          </button>
+        </div>
+        <div class="flex items-center space-x-6 text-sm">
+          <div><span class="text-slate-400">ผ่านแล้ว: </span><span id="code-exam-progress-text" class="font-bold text-sky-400">0 / 0</span></div>
+          <div><span class="text-slate-400">คะแนน: </span><span id="code-exam-score-text" class="font-bold text-emerald-400">0</span></div>
+          <button onclick="resetCodeExam()" class="text-xs bg-slate-700 hover:bg-slate-600 text-slate-300 px-3 py-1.5 rounded-md transition">
+            <i class="fa-solid fa-rotate-right mr-1"></i>เริ่มทำใหม่
+          </button>
+        </div>
+      </div>
+
+      <!-- Coding Questions Cards List -->
+      <div id="code-exam-container" class="space-y-6">
+        <!-- Dynamic Interactive SQL Coding Cards Inserted Here -->
+      </div>
+    </div>
+
+    <!-- ========================================================================= -->
+    <!-- TAB 2: MULTIPLE CHOICE QUIZ (MCQ) -->
+    <!-- ========================================================================= -->
+    <div id="tab-quiz" class="hidden space-y-6 flex-1 flex flex-col">
+      <!-- Quiz Progress & Filters -->
+      <div class="bg-slate-800 p-4 rounded-xl border border-slate-700 flex flex-wrap items-center justify-between gap-4">
+        <div class="flex items-center space-x-3 flex-wrap gap-2">
+          <span class="text-sm text-slate-400">หมวดหมู่ข้อสอบ:</span>
+          <select id="quiz-filter" onchange="filterQuiz()" class="bg-slate-900 border border-slate-700 text-slate-200 text-sm rounded-lg px-3 py-2 focus:ring-2 focus:ring-brand-500 focus:outline-none">
+            <option value="all">ทั้งหมด (20 ข้อ)</option>
+            <option value="ch3">Chapter 3: Basic SELECT, WHERE, DML (10 ข้อ)</option>
+            <option value="ch4">Chapter 4: JOIN, GROUP BY, Aggregate (10 ข้อ)</option>
+          </select>
+          <button onclick="randomizeQuizQuestions()" class="text-xs bg-brand-600 hover:bg-brand-500 text-white font-medium px-3 py-2 rounded-lg transition shadow flex items-center">
+            <i class="fa-solid fa-shuffle mr-1.5"></i>สุ่มสลับโจทย์ (Randomize)
+          </button>
+        </div>
+        <div class="flex items-center space-x-6 text-sm">
+          <div><span class="text-slate-400">ทำแล้ว: </span><span id="quiz-progress-text" class="font-bold text-sky-400">0 / 0</span></div>
+          <div><span class="text-slate-400">คะแนน: </span><span id="quiz-score-text" class="font-bold text-emerald-400">0</span></div>
+          <button onclick="resetQuiz()" class="text-xs bg-slate-700 hover:bg-slate-600 text-slate-300 px-3 py-1.5 rounded-md transition">
+            <i class="fa-solid fa-rotate-right mr-1"></i>เริ่มทำใหม่
+          </button>
+        </div>
+      </div>
+
+      <!-- Quiz Questions Cards List -->
+      <div id="quiz-container" class="space-y-6">
+        <!-- Dynamic Quiz Cards Inserted Here -->
+      </div>
+    </div>
+
+    <!-- ========================================================================= -->
+    <!-- TAB 3: SQL SANDBOX -->
+    <!-- ========================================================================= -->
+    <div id="tab-sandbox" class="hidden space-y-4 flex-1 flex-col">
+      <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 flex-1">
+        
+        <!-- Left: Query Editor & Controls -->
+        <div class="lg:col-span-2 flex flex-col space-y-4">
+          <div class="bg-slate-800 border border-slate-700 rounded-xl p-4 flex flex-col flex-1 shadow-lg">
+            <div class="flex justify-between items-center mb-3">
+              <label class="text-sm font-semibold text-sky-400 flex items-center">
+                <i class="fa-solid fa-code mr-2"></i>SQL Query Editor
+              </label>
+              <div class="flex space-x-2">
+                <button onclick="clearEditor()" class="text-xs px-2.5 py-1.5 rounded bg-slate-700 hover:bg-slate-600 text-slate-300 transition">
+                  <i class="fa-solid fa-eraser mr-1"></i>ล้างข้อมูล
+                </button>
+                <button onclick="runCustomQuery()" class="text-xs px-4 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white font-medium shadow-md transition flex items-center">
+                  <i class="fa-solid fa-play mr-1.5"></i>Execute SQL
+                </button>
+              </div>
+            </div>
+            
+            <textarea id="sql-editor" class="w-full flex-1 min-h-[160px] bg-slate-950 text-emerald-400 font-mono text-sm p-4 rounded-lg border border-slate-700 focus:ring-2 focus:ring-brand-500 focus:outline-none resize-none" placeholder="พิมพ์คำสั่ง SQL ที่นี่ (เช่น SELECT * FROM Persons WHERE City = 'Sandnes';)..."></textarea>
+            
+            <!-- Quick Preset Queries -->
+            <div class="mt-3 pt-3 border-t border-slate-700 flex flex-wrap items-center gap-2 text-xs">
+              <span class="text-slate-400">คำสั่งแนะนำ:</span>
+              <button onclick="setQuery(`SELECT * FROM Persons WHERE City = 'Sandnes';`)" class="bg-slate-900 border border-slate-700 hover:border-brand-500 text-slate-300 px-2 py-1 rounded">Persons Sandnes</button>
+              <button onclick="setQuery(`SELECT LastName, FirstName, OrderNo FROM Persons INNER JOIN Orders ON Persons.P_Id = Orders.P_Id;`)" class="bg-slate-900 border border-slate-700 hover:border-brand-500 text-slate-300 px-2 py-1 rounded">INNER JOIN Orders</button>
+              <button onclick="setQuery(`SELECT City, COUNT(*) AS Total FROM Persons GROUP BY City;`)" class="bg-slate-900 border border-slate-700 hover:border-brand-500 text-slate-300 px-2 py-1 rounded">GROUP BY City</button>
+              <button onclick="setQuery(`SELECT ProductName, Price FROM Products WHERE Price BETWEEN 18 AND 30 ORDER BY Price DESC;`)" class="bg-slate-900 border border-slate-700 hover:border-brand-500 text-slate-300 px-2 py-1 rounded">Products BETWEEN</button>
+            </div>
+          </div>
+
+          <!-- Query Result Output -->
+          <div class="bg-slate-800 border border-slate-700 rounded-xl p-4 flex-1 flex flex-col shadow-lg min-h-[250px]">
+            <h3 class="text-sm font-semibold text-slate-300 mb-3 flex items-center">
+              <i class="fa-solid fa-list-check mr-2 text-brand-500"></i>ผลลัพธ์การ Query (Result)
+            </h3>
+            <div id="query-result" class="flex-1 overflow-auto rounded-lg bg-slate-950 border border-slate-800 p-2 text-sm">
+              <p class="text-slate-500 italic p-4 text-center">กด Execute SQL เพื่อดูผลลัพธ์คำสั่ง</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- Right: Table Schemas Quick View -->
+        <div class="bg-slate-800 border border-slate-700 rounded-xl p-4 flex flex-col space-y-4">
+          <h3 class="text-sm font-semibold text-slate-200 border-b border-slate-700 pb-2 flex items-center">
+            <i class="fa-solid fa-sitemap mr-2 text-amber-400"></i>ตารางข้อมูลในระบบ (Database Schema)
+          </h3>
+          <div class="flex-1 overflow-y-auto space-y-4 pr-1 text-xs">
+            
+            <div class="bg-slate-900 p-3 rounded-lg border border-slate-700">
+              <div class="font-bold text-sky-400 mb-1 flex justify-between">
+                <span>Persons</span>
+                <span class="text-slate-500 font-normal">3 rows</span>
+              </div>
+              <p class="text-slate-400 text-[11px]">P_Id (PK), LastName, FirstName, Address, City</p>
+            </div>
+
+            <div class="bg-slate-900 p-3 rounded-lg border border-slate-700">
+              <div class="font-bold text-sky-400 mb-1 flex justify-between">
+                <span>Orders</span>
+                <span class="text-slate-500 font-normal">5 rows</span>
+              </div>
+              <p class="text-slate-400 text-[11px]">O_Id (PK), OrderNo, P_Id (FK)</p>
+            </div>
+
+            <div class="bg-slate-900 p-3 rounded-lg border border-slate-700">
+              <div class="font-bold text-sky-400 mb-1 flex justify-between">
+                <span>Products</span>
+                <span class="text-slate-500 font-normal">8 rows</span>
+              </div>
+              <p class="text-slate-400 text-[11px]">ProductID (PK), ProductName, SupplierID, CategoryID, Unit, Price</p>
+            </div>
+
+            <div class="bg-slate-900 p-3 rounded-lg border border-slate-700">
+              <div class="font-bold text-sky-400 mb-1 flex justify-between">
+                <span>student</span>
+                <span class="text-slate-500 font-normal">16 rows</span>
+              </div>
+              <p class="text-slate-400 text-[11px]">stdCode (PK), stdName, address, sex, facultyCode, majorCode, Gpa</p>
+            </div>
+
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- ========================================================================= -->
+    <!-- TAB 4: DATABASE TABLES VIEWER -->
+    <!-- ========================================================================= -->
+    <div id="tab-database" class="hidden space-y-6 flex-1 flex-col">
+      <div class="bg-slate-800 p-4 rounded-xl border border-slate-700 flex items-center justify-between">
+        <h2 class="text-lg font-bold text-slate-100 flex items-center">
+          <i class="fa-solid fa-table-cells mr-2 text-brand-500"></i>ข้อมูลตารางทั้งหมดในระบบ (W3Schools & Sample DB)
+        </h2>
+        <div class="flex space-x-2">
+          <button onclick="renderAllTables()" class="text-xs bg-slate-700 hover:bg-slate-600 text-slate-200 px-3 py-1.5 rounded transition">
+            <i class="fa-solid fa-arrows-rotate mr-1"></i>รีเฟรชข้อมูล
+          </button>
+        </div>
+      </div>
+
+      <div id="tables-container" class="space-y-8 flex-1 overflow-auto">
+        <!-- Tables are dynamically populated here -->
+      </div>
+    </div>
+
+  </main>
+
+  <script>
+    function initDatabase() {
+      // AlaSQL Table Creation & Seeding
+      alasql(`
+        DROP TABLE IF EXISTS Persons;
+        DROP TABLE IF EXISTS Orders;
+        DROP TABLE IF EXISTS Products;
+        DROP TABLE IF EXISTS student;
+
+        CREATE TABLE Persons (P_Id INT PRIMARY KEY, LastName STRING, FirstName STRING, Address STRING, City STRING);
+        INSERT INTO Persons VALUES 
+          (1, 'Hansen', 'Ola', 'Timoteivn 10', 'Sandnes'),
+          (2, 'Svendson', 'Tove', 'Borgvn 23', 'Sandnes'),
+          (3, 'Pettersen', 'Kari', 'Storgt 20', 'Stavanger');
+
+        CREATE TABLE Orders (O_Id INT PRIMARY KEY, OrderNo INT, P_Id INT);
+        INSERT INTO Orders VALUES 
+          (1, 77895, 3),
+          (2, 44678, 3),
+          (3, 22456, 1),
+          (4, 24562, 1),
+          (5, 34764, 15);
+
+        CREATE TABLE Products (ProductID INT PRIMARY KEY, ProductName STRING, SupplierID INT, CategoryID INT, Unit STRING, Price NUMBER);
+        INSERT INTO Products VALUES 
+          (1, 'Chais', 1, 1, '10 boxes x 20 bags', 18.00),
+          (2, 'Chang', 1, 1, '24 - 12 oz bottles', 19.00),
+          (3, 'Aniseed Syrup', 1, 2, '12 - 550 ml bottles', 10.00),
+          (4, "Chef Anton's Cajun Seasoning", 2, 2, '48 - 6 oz jars', 22.00),
+          (5, "Chef Anton's Gumbo Mix", 2, 2, '36 boxes', 21.35),
+          (6, "Grandma's Boysenberry Spread", 3, 2, '12 - 8 oz jars', 25.00),
+          (7, "Uncle Bob's Organic Dried Pears", 3, 7, '12 - 1 lb pkgs.', 30.00),
+          (8, 'Northwoods Cranberry Sauce', 3, 2, '12 - 12 oz jars', 40.00);
+
+        CREATE TABLE student (stdCode INT PRIMARY KEY, stdName STRING, address STRING, sex STRING, facultyCode STRING, majorCode STRING, Gpa NUMBER);
+        INSERT INTO student VALUES 
+          (50420001, 'นงคราญ', 'กรุงเทพ', 'F', 'BA', 'ACC', 3.15),
+          (50420002, 'สมควร', 'กรุงเทพ', 'M', 'IT', 'ICT', 3.11),
+          (50420010, 'ศรีสมร', 'ปทุมธานี', 'F', 'IT', 'ICT', 2.58),
+          (50420018, 'นิรุตน์', 'อยุธยา', 'M', 'BA', 'ACC', 3.75),
+          (50420019, 'จงรัก', 'ลพบุรี', 'M', 'BA', 'MN', 3.80),
+          (50420020, 'สมชาย', 'ระยอง', 'M', 'BA', 'MN', 2.15),
+          (51410002, 'สมฤทัย', 'ชลบุรี', 'F', 'IT', 'ICT', 2.00),
+          (51410004, 'มณีรัตน์', 'เชียงราย', 'F', 'BA', 'MN', 3.05),
+          (51410005, 'ประภาคาร', 'เชียงใหม่', 'M', 'IT', 'ICT', 2.85),
+          (51410006, 'ปิยะนุช', 'กรุงเทพ', 'F', 'IT', 'ITM', 3.51),
+          (51410007, 'ลัดดา', 'ลำปาง', 'F', 'BA', 'MK', 3.55),
+          (51410008, 'พงษ์ธร', 'ลำปาง', 'M', 'BA', 'MK', 2.92),
+          (51410011, 'สัญญา', 'อุตรดิตถ์', 'M', 'IT', 'ITM', 3.68),
+          (51410012, 'ลิขิต', 'กรุงเทพ', 'M', 'BA', 'ACC', 3.58),
+          (51410013, 'สมชาติ', 'ลำปาง', 'M', 'IT', 'ITM', 3.04),
+          (51410021, 'อุมาพร', 'เชียงใหม่', 'F', 'BA', 'ACC', 3.57);
+      `);
+    }
+
+    let codingQuestions = [
+      // --- Chapter 3: 10 Questions ---
+      {
+        id: "c1",
+        category: "ch3",
+        title: "ข้อที่ 1: ดึงเฉพาะชื่อ (FirstName) และเมือง (City) จากตาราง Persons",
+        description: "จงเขียนคำสั่ง SQL เพื่อเลือกเฉพาะคอลัมน์ FirstName และ City จากตาราง Persons ให้แสดงข้อมูลทั้งหมด",
+        hint: "ใช้คำสั่ง SELECT FirstName, City FROM Persons;",
+        expectedQuery: "SELECT FirstName, City FROM Persons",
+        initialCode: "SELECT  FROM Persons;"
+      },
+      {
+        id: "c2",
+        category: "ch3",
+        title: "ข้อที่ 2: ค้นหาบุคคลที่อาศัยอยู่ในเมือง 'Sandnes'",
+        description: "จงเขียนคำสั่ง SQL ดึงข้อมูลทุกคอลัมน์ของบุคคลจากตาราง Persons ที่มี City เท่ากับ 'Sandnes'",
+        hint: "ใช้ประโยคเงื่อนไข WHERE City = 'Sandnes'",
+        expectedQuery: "SELECT * FROM Persons WHERE City = 'Sandnes'",
+        initialCode: "SELECT * FROM Persons WHERE "
+      },
+      {
+        id: "c3",
+        category: "ch3",
+        title: "ข้อที่ 3: หาสินค้าที่มีราคา (Price) ระหว่าง 18 ถึง 25 บาท",
+        description: "จงเขียนคำสั่ง SQL เพื่อดึงข้อมูล ProductName และ Price จากตาราง Products ที่มีราคาสินค้าอยู่ระหว่าง 18 ถึง 25 บาท (รวมค่าปลายทาง) และเรียงลำดับราคาจากน้อยไปมาก (ASC)",
+        hint: "ใช้ Price BETWEEN 18 AND 25 ORDER BY Price ASC",
+        expectedQuery: "SELECT ProductName, Price FROM Products WHERE Price BETWEEN 18 AND 25 ORDER BY Price ASC",
+        initialCode: "SELECT ProductName, Price FROM Products WHERE "
+      },
+      {
+        id: "c4",
+        category: "ch3",
+        title: "ข้อที่ 4: ค้นหานักศึกษาที่มีชื่อขึ้นต้นด้วยคำว่า 'สม'",
+        description: "จงเขียนคำสั่ง SQL ดึงรหัส (stdCode) และชื่อนักศึกษา (stdName) จากตาราง student ที่มีชื่อขึ้นต้นด้วยคำว่า 'สม'",
+        hint: "ใช้ Wildcard LIKE 'สม%'",
+        expectedQuery: "SELECT stdCode, stdName FROM student WHERE stdName LIKE 'สม%'",
+        initialCode: "SELECT stdCode, stdName FROM student WHERE "
+      },
+      {
+        id: "c5",
+        category: "ch3",
+        title: "ข้อที่ 5: ค้นหารายชื่อเมือง (City) แบบไม่ซ้ำกัน จากตาราง Persons",
+        description: "จงเขียนคำสั่ง SQL เพื่อแสดงรายชื่อเมืองทั้งหมดจากตาราง Persons โดยตัดเมืองที่ซ้ำออกให้เหลือเพียงค่าเดียว",
+        hint: "ใช้คำสั่ง SELECT DISTINCT City FROM Persons;",
+        expectedQuery: "SELECT DISTINCT City FROM Persons",
+        initialCode: "SELECT DISTINCT "
+      },
+      {
+        id: "c6",
+        category: "ch3",
+        title: "ข้อที่ 6: ค้นหานักศึกษาที่มี GPA ตั้งแต่ 3.50 ขึ้นไป และอาศัยอยู่ใน 'กรุงเทพ'",
+        description: "จงเขียนคำสั่ง SQL ดึงชื่อนักศึกษา (stdName), จังหวัด (address) และ GPA จากตาราง student ที่มี Gpa >= 3.50 และ address = 'กรุงเทพ'",
+        hint: "ใช้เงื่อนไข Gpa >= 3.50 AND address = 'กรุงเทพ'",
+        expectedQuery: "SELECT stdName, address, Gpa FROM student WHERE Gpa >= 3.50 AND address = 'กรุงเทพ'",
+        initialCode: "SELECT stdName, address, Gpa FROM student WHERE "
+      },
+      {
+        id: "c7",
+        category: "ch3",
+        title: "ข้อที่ 7: ค้นหาสินค้าจากตาราง Products ที่มี SupplierID เป็น 1 หรือ 3",
+        description: "จงเขียนคำสั่ง SQL แสดง ProductName, SupplierID และ Price จากตาราง Products ของสินค้าที่มี SupplierID เท่ากับ 1 หรือ 3 โดยใช้ IN",
+        hint: "ใช้ SupplierID IN (1, 3)",
+        expectedQuery: "SELECT ProductName, SupplierID, Price FROM Products WHERE SupplierID IN (1, 3)",
+        initialCode: "SELECT ProductName, SupplierID, Price FROM Products WHERE "
+      },
+      {
+        id: "c8",
+        category: "ch3",
+        title: "ข้อที่ 8: แสดงนักศึกษาทั้งหมดเรียงลำดับตาม GPA จากมากไปน้อย",
+        description: "จงเขียนคำสั่ง SQL ดึงรหัส (stdCode), ชื่อ (stdName) และ Gpa จากตาราง student โดยจัดเรียงลำดับ Gpa จากสูงสุดไปหาต่ำสุด (DESC)",
+        hint: "ใช้ ORDER BY Gpa DESC",
+        expectedQuery: "SELECT stdCode, stdName, Gpa FROM student ORDER BY Gpa DESC",
+        initialCode: "SELECT stdCode, stdName, Gpa FROM student "
+      },
+      {
+        id: "c9",
+        category: "ch3",
+        title: "ข้อที่ 9: ค้นหานักศึกษาที่นามสกุลหรือชื่อลงท้ายด้วย 'ร'",
+        description: "จงเขียนคำสั่ง SQL ดึงข้อมูลนักศึกษาทุกคนจากตาราง student ที่มี stdName ลงท้ายด้วยตัวอักษร 'ร'",
+        hint: "ใช้ Wildcard LIKE '%ร'",
+        expectedQuery: "SELECT * FROM student WHERE stdName LIKE '%ร'",
+        initialCode: "SELECT * FROM student WHERE "
+      },
+      {
+        id: "c10",
+        category: "ch3",
+        title: "ข้อที่ 10: ค้นหาสินค้าที่มีราคามากกว่า 20 บาท และไม่ได้อยู่ใน CategoryID 1",
+        description: "จงเขียนคำสั่ง SQL แสดง ProductName, CategoryID, Price จากตาราง Products ที่ Price > 20 และ CategoryID <> 1",
+        hint: "ใช้เงื่อนไข Price > 20 AND CategoryID <> 1",
+        expectedQuery: "SELECT ProductName, CategoryID, Price FROM Products WHERE Price > 20 AND CategoryID <> 1",
+        initialCode: "SELECT ProductName, CategoryID, Price FROM Products WHERE "
+      },
+
+      // --- Chapter 4: 10 Questions ---
+      {
+        id: "c11",
+        category: "ch4",
+        title: "ข้อที่ 11: INNER JOIN เชื่อมตาราง Persons และ Orders",
+        description: "จงเขียนคำสั่ง SQL เชื่อมตาราง Persons และ Orders ด้วยคอลัมน์ P_Id เพื่อแสดง LastName, FirstName จาก Persons และ OrderNo จาก Orders เฉพาะรายการที่มีการจับคู่ตรงกันเท่านั้น",
+        hint: "ใช้ INNER JOIN Orders ON Persons.P_Id = Orders.P_Id",
+        expectedQuery: "SELECT Persons.LastName, Persons.FirstName, Orders.OrderNo FROM Persons INNER JOIN Orders ON Persons.P_Id = Orders.P_Id",
+        initialCode: "SELECT Persons.LastName, Persons.FirstName, Orders.OrderNo FROM Persons "
+      },
+      {
+        id: "c12",
+        category: "ch4",
+        title: "ข้อที่ 12: หา GPA เฉลี่ย (AVG) แยกตามคณะ (facultyCode)",
+        description: "จงเขียนคำสั่ง SQL คำนวณหาค่าเฉลี่ยของ GPA แยกตามคณะ (facultyCode) จากตาราง student และตั้งชื่อคอลัมน์ผลลัพธ์ว่า AvgGPA",
+        hint: "ใช้ AVG(Gpa) AS AvgGPA ร่วมกับ GROUP BY facultyCode",
+        expectedQuery: "SELECT facultyCode, AVG(Gpa) AS AvgGPA FROM student GROUP BY facultyCode",
+        initialCode: "SELECT facultyCode, AVG(Gpa) AS AvgGPA FROM student "
+      },
+      {
+        id: "c13",
+        category: "ch4",
+        title: "ข้อที่ 13: กรองผลรวมด้วย HAVING (คณะที่มี GPA เฉลี่ย > 3.00)",
+        description: "จงเขียนคำสั่ง SQL หาค่าเฉลี่ย GPA แยกตามคณะ (facultyCode) โดยแสดงเฉพาะคณะที่มีค่าเฉลี่ย GPA มากกว่า 3.00 ขึ้นไปเท่านั้น",
+        hint: "ใช้ GROUP BY facultyCode HAVING AVG(Gpa) > 3.00",
+        expectedQuery: "SELECT facultyCode, AVG(Gpa) AS AvgGPA FROM student GROUP BY facultyCode HAVING AVG(Gpa) > 3.00",
+        initialCode: "SELECT facultyCode, AVG(Gpa) AS AvgGPA FROM student GROUP BY facultyCode "
+      },
+      {
+        id: "c14",
+        category: "ch4",
+        title: "ข้อที่ 14: LEFT JOIN หาคนทุกคนพร้อมใบสั่งซื้อที่มี",
+        description: "จงเขียนคำสั่ง SQL แบบ LEFT JOIN ระหว่าง Persons (ตารางซ้าย) และ Orders (ตารางขวา) เพื่อแสดง LastName, FirstName และ OrderNo",
+        hint: "ใช้ FROM Persons LEFT JOIN Orders ON Persons.P_Id = Orders.P_Id",
+        expectedQuery: "SELECT Persons.LastName, Persons.FirstName, Orders.OrderNo FROM Persons LEFT JOIN Orders ON Persons.P_Id = Orders.P_Id",
+        initialCode: "SELECT Persons.LastName, Persons.FirstName, Orders.OrderNo FROM Persons "
+      },
+      {
+        id: "c15",
+        category: "ch4",
+        title: "ข้อที่ 15: นับจำนวนนักศึกษาชายและหญิงในแต่ละคณะ (GROUP BY 2 คอลัมน์)",
+        description: "จงเขียนคำสั่ง SQL นับจำนวนนักศึกษา (COUNT(*) AS Total) แยกตามคณะ (facultyCode) และเพศ (sex)",
+        hint: "ใช้ GROUP BY facultyCode, sex",
+        expectedQuery: "SELECT facultyCode, sex, COUNT(*) AS Total FROM student GROUP BY facultyCode, sex",
+        initialCode: "SELECT facultyCode, sex, COUNT(*) AS Total FROM student "
+      },
+      {
+        id: "c16",
+        category: "ch4",
+        title: "ข้อที่ 16: หาค่า GPA สูงสุด (MAX) และต่ำสุด (MIN) ของแต่ละสาขาวิชา (majorCode)",
+        description: "จงเขียนคำสั่ง SQL แสดง majorCode, MAX(Gpa) AS MaxGpa, MIN(Gpa) AS MinGpa แยกตามสาขาวิชา (majorCode) จากตาราง student",
+        hint: "ใช้ MAX(Gpa) AS MaxGpa, MIN(Gpa) AS MinGpa GROUP BY majorCode",
+        expectedQuery: "SELECT majorCode, MAX(Gpa) AS MaxGpa, MIN(Gpa) AS MinGpa FROM student GROUP BY majorCode",
+        initialCode: "SELECT majorCode, MAX(Gpa) AS MaxGpa, MIN(Gpa) AS MinGpa FROM student "
+      },
+      {
+        id: "c17",
+        category: "ch4",
+        title: "ข้อที่ 17: ค้นหาลูกค้าที่ยังไม่เคยมีใบสั่งซื้อเลย (LEFT JOIN + IS NULL)",
+        description: "จงเขียนคำสั่ง SQL แบบ LEFT JOIN ระหว่าง Persons และ Orders เพื่อดึง LastName และ FirstName ของคนที่ไม่มี OrderNo (OrderNo IS NULL)",
+        hint: "ใช้ WHERE Orders.OrderNo IS NULL หรือ Orders.O_Id IS NULL",
+        expectedQuery: "SELECT Persons.LastName, Persons.FirstName FROM Persons LEFT JOIN Orders ON Persons.P_Id = Orders.P_Id WHERE Orders.OrderNo IS NULL",
+        initialCode: "SELECT Persons.LastName, Persons.FirstName FROM Persons LEFT JOIN Orders ON Persons.P_Id = Orders.P_Id WHERE "
+      },
+      {
+        id: "c18",
+        category: "ch4",
+        title: "ข้อที่ 18: นับจำนวนสินค้าและราคาสินค้าเฉลี่ยแยกตาม CategoryID",
+        description: "จงเขียนคำสั่ง SQL แสดง CategoryID, COUNT(*) AS TotalProducts, AVG(Price) AS AvgPrice จากตาราง Products โดยจัดกลุ่มตาม CategoryID",
+        hint: "ใช้ GROUP BY CategoryID",
+        expectedQuery: "SELECT CategoryID, COUNT(*) AS TotalProducts, AVG(Price) AS AvgPrice FROM Products GROUP BY CategoryID",
+        initialCode: "SELECT CategoryID, COUNT(*) AS TotalProducts, AVG(Price) AS AvgPrice FROM Products "
+      },
+      {
+        id: "c19",
+        category: "ch4",
+        title: "ข้อที่ 19: กรองสาขาที่มีจำนวนนักศึกษัตั้งแต่ 4 คนขึ้นไป (HAVING COUNT(*) >= 4)",
+        description: "จงเขียนคำสั่ง SQL แสดง majorCode และจำนวนนักศึกษา COUNT(*) AS StudentCount จากตาราง student ที่มีนักศึกษาในสาขานั้นตั้งแต่ 4 คนขึ้นไป",
+        hint: "ใช้ GROUP BY majorCode HAVING COUNT(*) >= 4",
+        expectedQuery: "SELECT majorCode, COUNT(*) AS StudentCount FROM student GROUP BY majorCode HAVING COUNT(*) >= 4",
+        initialCode: "SELECT majorCode, COUNT(*) AS StudentCount FROM student GROUP BY majorCode "
+      },
+      {
+        id: "c20",
+        category: "ch4",
+        title: "ข้อที่ 20: รวมชื่อนามสกุลนักศึกษาเป็นคอลัมน์เดียวด้วย CONCAT และตั้งชื่อ Alias ว่า FullName",
+        description: "จงเขียนคำสั่ง SQL แสดง stdCode และรวมคำว่า 'คุณ ' กับ stdName ในคอลัมน์ชื่อ FullName (เช่น CONCAT('คุณ ', stdName) AS FullName) เฉพาะนักศึกษาคณะ 'IT'",
+        hint: "ใช้ CONCAT('คุณ ', stdName) AS FullName WHERE facultyCode = 'IT'",
+        expectedQuery: "SELECT stdCode, CONCAT('คุณ ', stdName) AS FullName FROM student WHERE facultyCode = 'IT'",
+        initialCode: "SELECT stdCode, CONCAT('คุณ ', stdName) AS FullName FROM student WHERE "
+      }
+    ];
+
+    let quizQuestions = [
+      // --- Chapter 3: 10 MCQ Questions ---
+      {
+        id: 1,
+        category: "ch3",
+        title: "ข้อที่ 1: ข้อใดคือการเขียนคำสั่ง SELECT เลือกเฉพาะชื่อและนามสกุลจากตาราง Persons ได้ถูกต้อง?",
+        sqlHint: "SELECT LastName, FirstName FROM Persons;",
+        options: [
+          "SELECT * FROM Persons",
+          "SELECT FirstName, LastName FROM Persons",
+          "SELECT Name FROM Persons",
+          "CHOOSE FirstName, LastName FROM Persons"
+        ],
+        answer: 1,
+        explanation: "การเลือกเฉพาะคอลัมน์ที่ต้องการ ให้ระบุชื่อคอลัมน์แยกด้วยเครื่องหมายจุลภาค (,) เช่น SELECT FirstName, LastName FROM Persons"
+      },
+      {
+        id: 2,
+        category: "ch3",
+        title: "ข้อที่ 2: ต้องการแสดงรายชื่อเมือง (City) จากตาราง Persons โดยไม่ให้มีค่าซ้ำกัน ต้องใช้คำสั่งใด?",
+        sqlHint: "SELECT DISTINCT City FROM Persons;",
+        options: [
+          "SELECT UNIQUE City FROM Persons",
+          "SELECT DISTINCT City FROM Persons",
+          "SELECT DIFFERENT City FROM Persons",
+          "SELECT City FROM Persons GROUP NO DUPLICATE"
+        ],
+        answer: 1,
+        explanation: "คีย์เวิร์ด DISTINCT ใช้สำหรับตัดข้อมูลที่ซ้ำกันออก ให้เหลือเพียงค่าละหนึ่งรายการ"
+      },
+      {
+        id: 3,
+        category: "ch3",
+        title: "ข้อที่ 3: หากต้องการคัดกรองข้อมูลบุคคลที่อาศัยอยู่เมือง 'Sandnes' ต้องใช้เงื่อนไขใด?",
+        sqlHint: "SELECT * FROM Persons WHERE City = 'Sandnes';",
+        options: [
+          "WHERE City = Sandnes",
+          "WHERE City == 'Sandnes'",
+          "WHERE City = 'Sandnes'",
+          "WHERE City LIKE Sandnes"
+        ],
+        answer: 2,
+        explanation: "ค่าที่เป็นข้อความ (String/Text) ในประโยค WHERE จำเป็นต้องใส่เครื่องหมายคำพูดเดี่ยว (' ') กำกับเสมอ"
+      },
+      {
+        id: 4,
+        category: "ch3",
+        title: "ข้อที่ 4: คำสั่งใดต่อไปนี้ในการ UPDATE ข้อมูล มีความเสี่ยงที่จะทำให้ข้อมูลเมืองของ 'ทุกคน' กลายเป็น Oslo?",
+        sqlHint: "UPDATE Persons SET City = 'Oslo';",
+        options: [
+          "UPDATE Persons SET City = 'Oslo' WHERE P_Id = 1;",
+          "UPDATE Persons SET City = 'Oslo';",
+          "MODIFY Persons SET City = 'Oslo';",
+          "UPDATE Persons City = 'Oslo' ALL;"
+        ],
+        answer: 1,
+        explanation: "คำสั่ง UPDATE ที่ไม่มีประโยค WHERE กำกับ จะทำการแก้ไขข้อมูลในคอลัมน์นั้นของ 'ทุกแถว' ในตารางทันที"
+      },
+      {
+        id: 5,
+        category: "ch3",
+        title: "ข้อที่ 5: การค้นหาข้อความที่ขึ้นต้นด้วยตัว 'S' ในคอลัมน์ City ต้องใช้ Wildcard แบบใด?",
+        sqlHint: "SELECT * FROM Persons WHERE City LIKE 'S%';",
+        options: [
+          "WHERE City LIKE 'S%'",
+          "WHERE City LIKE '%S'",
+          "WHERE City LIKE '%S%'",
+          "WHERE City = 'S*'"
+        ],
+        answer: 0,
+        explanation: "'S%' หมายถึง ขึ้นต้นด้วย S และตามด้วยตัวอักษรอะไรก็ได้อีกกี่ตัวก็ได้"
+      },
+      {
+        id: 6,
+        category: "ch3",
+        title: "ข้อที่ 6: คำสั่งหาสินค้าจากตาราง Products ที่มีราคา (Price) อยู่ในช่วง 18 ถึง 25 บาท รวมค่าปลายทั้งสองข้าง คือคำสั่งใด?",
+        sqlHint: "SELECT * FROM Products WHERE Price BETWEEN 18 AND 25;",
+        options: [
+          "WHERE Price IN (18, 25)",
+          "WHERE Price BETWEEN 18 AND 25",
+          "WHERE Price FROM 18 TO 25",
+          "WHERE Price >= 18 OR Price <= 25"
+        ],
+        answer: 1,
+        explanation: "BETWEEN a AND b ใช้เลือกค่าที่อยู่ในช่วงระหว่าง a ถึง b โดยนับรวมค่าปลายทางทั้งสองข้างด้วย (Inclusive)"
+      },
+      {
+        id: 7,
+        category: "ch3",
+        title: "ข้อที่ 7: คำสั่ง DELETE FROM Persons; โดยไม่มีประโยค WHERE จะส่งผลอย่างไร?",
+        sqlHint: "DELETE FROM Persons;",
+        options: [
+          "เกิด Error ไม่สามารถรันได้",
+          "ลบเฉพาะแถวแรกสุดของตาราง",
+          "ลบข้อมูลทั้งหมดในตาราง แต่ยังคงโครงสร้างตารางไว้",
+          "ลบตารางทิ้งทั้งโครงสร้างและข้อมูล (เหมือน DROP TABLE)"
+        ],
+        answer: 2,
+        explanation: "DELETE ที่ไม่มี WHERE จะลบข้อมูลทุกแถวในตารางจนเป็นตารางว่าง แต่โครงสร้างตาราง (Columns & Schema) ยังคงอยู่"
+      },
+      {
+        id: 8,
+        category: "ch3",
+        title: "ข้อที่ 8: หากต้องการเรียงลำดับราคาสินค้าจากมากไปหาน้อย ต้องใช้คำสั่งใด?",
+        sqlHint: "SELECT * FROM Products ORDER BY Price DESC;",
+        options: [
+          "ORDER BY Price ASC",
+          "ORDER BY Price DESC",
+          "SORT BY Price DOWN",
+          "GROUP BY Price DESC"
+        ],
+        answer: 1,
+        explanation: "DESC (Descending) ใช้สำหรับเรียงลำดับจากมากไปหาน้อย ส่วน ASC (Ascending) คือจากน้อยไปหามาก"
+      },
+      {
+        id: 9,
+        category: "ch3",
+        title: "ข้อที่ 9: ประโยค WHERE City IN ('Sandnes', 'Stavanger') มีความหมายตรงกับข้อใด?",
+        sqlHint: "SELECT * FROM Persons WHERE City = 'Sandnes' OR City = 'Stavanger';",
+        options: [
+          "WHERE City = 'Sandnes' AND City = 'Stavanger'",
+          "WHERE City = 'Sandnes' OR City = 'Stavanger'",
+          "WHERE City LIKE 'Sandnes%'",
+          "WHERE City BETWEEN 'Sandnes' AND 'Stavanger'"
+        ],
+        answer: 1,
+        explanation: "IN (...) เป็นรูปย่อของการเขียนเงื่อนไข OR หลายๆ ตัวต่อกัน"
+      },
+      {
+        id: 10,
+        category: "ch3",
+        title: "ข้อที่ 10: คำสั่ง INSERT INTO แบบใดที่บังคับว่าต้องระบุค่าให้ครบทุกคอลัมน์ตามลำดับตาราง?",
+        sqlHint: "INSERT INTO Persons VALUES (1, 'Hansen', 'Ola', 'Timoteivn 10', 'Sandnes');",
+        options: [
+          "INSERT INTO table_name VALUES (val1, val2, ...)",
+          "INSERT INTO table_name (col1, col2) VALUES (val1, val2)",
+          "UPDATE table_name SET col1 = val1",
+          "CREATE TABLE table_name (col1 INT)"
+        ],
+        answer: 0,
+        explanation: "การเขียน INSERT INTO โดยไม่ระบุชื่อคอลัมน์ จำเป็นต้องใส่ค่าให้ครบทุกคอลัมน์เรียงตามลำดับโครงสร้างตารางเดิม"
+      },
+
+      // --- Chapter 4: 10 MCQ Questions ---
+      {
+        id: 11,
+        category: "ch4",
+        title: "ข้อที่ 11: การทำ INNER JOIN ระหว่างตาราง Persons และ Orders ด้วยคอลัมน์ P_Id ผลลัพธ์จะแสดงข้อมูลใด?",
+        sqlHint: "SELECT Persons.FirstName, Orders.OrderNo FROM Persons INNER JOIN Orders ON Persons.P_Id = Orders.P_Id;",
+        options: [
+          "แสดงรายชื่อบุคคลทุกคน แม้จะไม่มีใบสั่งซื้อก็ตาม",
+          "แสดงเฉพาะใบสั่งซื้อที่ไม่มีเจ้าของ",
+          "แสดงเฉพาะข้อมูลที่มี P_Id ตรงกันในทั้งสองตารางเท่านั้น",
+          "แสดงข้อมูลทั้งหมดจากทั้งสองตารางรวมกันทุกกรณี"
+        ],
+        answer: 2,
+        explanation: "INNER JOIN จะคัดเลือกเฉพาะแถวที่มีค่าตรงกันในเงื่อนไข ON ของทั้งสองตารางเท่านั้น ข้อมูลที่จับคู่ไม่ได้จะถูกตัดออก"
+      },
+      {
+        id: 12,
+        category: "ch4",
+        title: "ข้อที่ 12: หากต้องการหา 'ลูกค้าทุกคน' พร้อมใบสั่งซื้อที่มี (ถ้าไม่มีให้แสดงค่า NULL ในช่อง OrderNo) ต้องใช้ JOIN ประเภทใด?",
+        sqlHint: "SELECT Persons.FirstName, Orders.OrderNo FROM Persons LEFT JOIN Orders ON Persons.P_Id = Orders.P_Id;",
+        options: [
+          "INNER JOIN",
+          "LEFT JOIN",
+          "RIGHT JOIN",
+          "CROSS JOIN"
+        ],
+        answer: 1,
+        explanation: "LEFT JOIN จะดึงข้อมูลตารางฝั่งซ้าย (Persons) มาแสดงทั้งหมด ส่วนฝั่งขวาถ้าไม่มีข้อมูลจะแสดงเป็น NULL"
+      },
+      {
+        id: 13,
+        category: "ch4",
+        title: "ข้อที่ 13: ข้อใดคือความแตกต่างหลักระหว่าง UNION และ UNION ALL?",
+        sqlHint: "SELECT E_Name FROM Emp1 UNION SELECT E_Name FROM Emp2;",
+        options: [
+          "UNION ใช้ต่อแนวนอน แต่ UNION ALL ใช้ต่อแนวตั้ง",
+          "UNION จะตัดแถวที่ซ้ำกันออก แต่ UNION ALL จะแสดงแถวซ้ำทั้งหมด",
+          "UNION ใช้กับตัวเลขเท่านั้น แต่ UNION ALL ใช้กับข้อความได้",
+          "ไม่มีความแตกต่างกัน ให้ผลลัพธ์เหมือนกันทุกประการ"
+        ],
+        answer: 1,
+        explanation: "UNION จะทำการยุบแถวที่ซ้ำกันออกเหมือน DISTINCT ส่วน UNION ALL จะนำผลลัพธ์มารวมต่อกันทั้งหมดโดยไม่เช็คซ้ำ"
+      },
+      {
+        id: 14,
+        category: "ch4",
+        title: "ข้อที่ 14: ข้อใดอธิบายการทำงานของ COUNT(*) และ COUNT(column_name) ได้ถูกต้องที่สุด?",
+        sqlHint: "SELECT COUNT(*), COUNT(OrderNo) FROM Persons LEFT JOIN Orders ON Persons.P_Id = Orders.P_Id;",
+        options: [
+          "COUNT(*) ไม่นับค่า NULL แต่ COUNT(column) นับค่า NULL",
+          "COUNT(*) นับทุกแถวที่มีในผลลัพธ์ ส่วน COUNT(column) จะนับเฉพาะแถวที่คอลัมน์นั้นไม่เป็น NULL",
+          "ทั้งสองแบบทำงานเหมือนกันทุกประการ",
+          "COUNT(*) ใช้ได้เฉพาะกับตารางที่มีคีย์หลักเท่านั้น"
+        ],
+        answer: 1,
+        explanation: "COUNT(*) นับจำนวนแถวทั้งหมดในตารางหรือผลลัพธ์ แต่ COUNT(column) จะนับเฉพาะแถวที่มีค่าในคอลัมน์นั้น (ข้ามค่า NULL)"
+      },
+      {
+        id: 15,
+        category: "ch4",
+        title: "ข้อที่ 15: จากตาราง student หากต้องการหา GPA เฉลี่ยแยกตามคณะ (facultyCode) ต้องใช้ประโยคคำสั่งใด?",
+        sqlHint: "SELECT facultyCode, AVG(Gpa) FROM student GROUP BY facultyCode;",
+        options: [
+          "SELECT facultyCode, AVG(Gpa) FROM student ORDER BY facultyCode;",
+          "SELECT facultyCode, AVG(Gpa) FROM student GROUP BY facultyCode;",
+          "SELECT facultyCode, SUM(Gpa) FROM student WHERE facultyCode = 'ALL';",
+          "SELECT AVG(Gpa) FROM student HAVING facultyCode;"
+        ],
+        answer: 1,
+        explanation: "การใช้ Aggregate Function ร่วมกับคอลัมน์ปกติ จำเป็นต้องจัดกลุ่มด้วย GROUP BY คอลัมน์นั้นๆ"
+      },
+      {
+        id: 16,
+        category: "ch4",
+        title: "ข้อที่ 16: หากต้องการกรองเงื่อนไขของค่าเฉลี่ย GPA ที่คำนวณได้ ให้แสดงเฉพาะคณะที่มี GPA เฉลี่ย > 3.00 ต้องใส่เงื่อนไขไว้ที่ส่วนใด?",
+        sqlHint: "SELECT facultyCode, AVG(Gpa) FROM student GROUP BY facultyCode HAVING AVG(Gpa) > 3.00;",
+        options: [
+          "WHERE AVG(Gpa) > 3.00",
+          "HAVING AVG(Gpa) > 3.00",
+          "ORDER BY AVG(Gpa) > 3.00",
+          "GROUP BY AVG(Gpa) > 3.00"
+        ],
+        answer: 1,
+        explanation: "WHERE ใช้กรองแถวก่อนจัดกลุ่ม แต่ HAVING ใช้กรองผลลัพธ์ของ Aggregate Functions หลังจากการ GROUP BY เรียบร้อยแล้ว"
+      },
+      {
+        id: 17,
+        category: "ch4",
+        title: "ข้อที่ 17: ลำดับการประมวลผลคำสั่ง SQL ของระบบ DBMS ข้อใดถูกต้อง?",
+        sqlHint: "FROM -> WHERE -> GROUP BY -> HAVING -> SELECT -> ORDER BY",
+        options: [
+          "SELECT -> FROM -> WHERE -> GROUP BY -> HAVING",
+          "FROM -> WHERE -> GROUP BY -> HAVING -> SELECT -> ORDER BY",
+          "WHERE -> FROM -> GROUP BY -> SELECT -> HAVING",
+          "FROM -> SELECT -> WHERE -> HAVING -> GROUP BY"
+        ],
+        answer: 1,
+        explanation: "DBMS เริ่มต้นจากการหาตาราง (FROM) -> กรองแถว (WHERE) -> จัดกลุ่ม (GROUP BY) -> กรองกลุ่ม (HAVING) -> เลือกคอลัมน์ (SELECT) -> จัดเรียง (ORDER BY)"
+      },
+      {
+        id: 18,
+        category: "ch4",
+        title: "ข้อที่ 18: การใช้ Scalar Function เช่น ROUND(AVG(Gpa), 2) ใน MySQL ทำหน้าที่อะไร?",
+        sqlHint: "SELECT facultyCode, ROUND(AVG(Gpa), 2) FROM student GROUP BY facultyCode;",
+        options: [
+          "หาค่า GPA ที่มากที่สุด 2 อันดับแรก",
+          "ปัดทศนิยมของค่าเฉลี่ย GPA ให้เหลือ 2 ตำแหน่ง",
+          "สุ่มเลือกนักศึกษามา 2 คนจากแต่ละคณะ",
+          "คูณค่าเฉลี่ย GPA ด้วย 2"
+        ],
+        answer: 1,
+        explanation: "ROUND(numeric_expression, decimals) ทำหน้าที่ปัดเศษทศนิยมตามจำนวนตำแหน่งที่ระบุ"
+      },
+      {
+        id: 19,
+        category: "ch4",
+        title: "ข้อที่ 19: ข้อใดคือการรวมผลลัพธ์จาก 2 ตารางแบบต่อแนวนอน (เพิ่มคอลัมน์) และต่อแนวตั้ง (เพิ่มแถว) ตามลำดับ?",
+        sqlHint: "JOIN ต่อแนวนอน / UNION ต่อแนวตั้ง",
+        options: [
+          "JOIN แล้วตามด้วย UNION",
+          "UNION แล้วตามด้วย JOIN",
+          "GROUP BY แล้วตามด้วย HAVING",
+          "WHERE แล้วตามด้วย ORDER BY"
+        ],
+        answer: 0,
+        explanation: "JOIN นำตารางมาจับคู่ต่อกันในแนวนอน (เพิ่มคอลัมน์) ส่วน UNION นำผลลัพธ์มารวมกันในแนวตั้ง (เพิ่มแถว)"
+      },
+      {
+        id: 20,
+        category: "ch4",
+        title: "ข้อที่ 20: ใน MySQL หากต้องการทำ FULL OUTER JOIN แต่ไม่มีคำสั่ง FULL JOIN โดยตรง ต้องเขียนคำสั่งอย่างไร?",
+        sqlHint: "LEFT JOIN ... UNION ... RIGHT JOIN",
+        options: [
+          "ใช้ INNER JOIN สองครั้งต่อกัน",
+          "ใช้ LEFT JOIN รวมกับ RIGHT JOIN ด้วย UNION",
+          "ใช้ CROSS JOIN ร่วมกับ WHERE",
+          "ใช้ GROUP BY ร่วมกับ HAVING FULL"
+        ],
+        answer: 1,
+        explanation: "MySQL ไม่มีคำสั่ง FULL JOIN โดยตรง จึงต้องใช้ LEFT JOIN รวมกับ RIGHT JOIN ผ่านคำสั่ง UNION แทน"
+      }
+    ];
+
+    // State Variables
+    let codeExamAnswers = {}; 
+    let userAnswers = {};
+    let activeTab = 'code-exam';
+
+    function shuffleArray(array) {
+      for (let i = array.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [array[i], array[j]] = [array[j], array[i]];
+      }
+      return array;
+    }
+
+    function randomizeCodingQuestions() {
+      codingQuestions = shuffleArray(codingQuestions);
+      renderCodeExam();
+    }
+
+    function randomizeQuizQuestions() {
+      quizQuestions = shuffleArray(quizQuestions);
+      renderQuiz();
+    }
+
+    function switchTab(tab) {
+      activeTab = tab;
+      
+      document.getElementById('tab-code-exam').classList.add('hidden');
+      document.getElementById('tab-quiz').classList.add('hidden');
+      document.getElementById('tab-sandbox').classList.add('hidden');
+      document.getElementById('tab-database').classList.add('hidden');
+
+      document.getElementById('nav-code-exam-btn').className = "px-3 py-2 rounded-lg text-xs sm:text-sm font-medium text-slate-300 hover:bg-slate-700 hover:text-white transition duration-200 whitespace-nowrap";
+      document.getElementById('nav-quiz-btn').className = "px-3 py-2 rounded-lg text-xs sm:text-sm font-medium text-slate-300 hover:bg-slate-700 hover:text-white transition duration-200 whitespace-nowrap";
+      document.getElementById('nav-sandbox-btn').className = "px-3 py-2 rounded-lg text-xs sm:text-sm font-medium text-slate-300 hover:bg-slate-700 hover:text-white transition duration-200 whitespace-nowrap";
+      document.getElementById('nav-db-btn').className = "px-3 py-2 rounded-lg text-xs sm:text-sm font-medium text-slate-300 hover:bg-slate-700 hover:text-white transition duration-200 whitespace-nowrap";
+
+      if(tab === 'code-exam') {
+        document.getElementById('tab-code-exam').classList.remove('hidden');
+        document.getElementById('nav-code-exam-btn').className = "px-3 py-2 rounded-lg text-xs sm:text-sm font-medium transition duration-200 bg-brand-600 text-white shadow-md whitespace-nowrap";
+        renderCodeExam();
+      } else if(tab === 'quiz') {
+        document.getElementById('tab-quiz').classList.remove('hidden');
+        document.getElementById('nav-quiz-btn').className = "px-3 py-2 rounded-lg text-xs sm:text-sm font-medium transition duration-200 bg-brand-600 text-white shadow-md whitespace-nowrap";
+        renderQuiz();
+      } else if(tab === 'sandbox') {
+        document.getElementById('tab-sandbox').classList.remove('hidden');
+        document.getElementById('tab-sandbox').classList.add('flex');
+        document.getElementById('nav-sandbox-btn').className = "px-3 py-2 rounded-lg text-xs sm:text-sm font-medium transition duration-200 bg-brand-600 text-white shadow-md whitespace-nowrap";
+      } else if(tab === 'database') {
+        document.getElementById('tab-database').classList.remove('hidden');
+        document.getElementById('tab-database').classList.add('flex');
+        document.getElementById('nav-db-btn').className = "px-3 py-2 rounded-lg text-xs sm:text-sm font-medium transition duration-200 bg-brand-600 text-white shadow-md whitespace-nowrap";
+        renderAllTables();
+      }
+    }
+
+    function renderCodeExam() {
+      const container = document.getElementById('code-exam-container');
+      const filter = document.getElementById('code-exam-filter').value;
+      
+      const filteredList = codingQuestions.filter(q => filter === 'all' || q.category === filter);
+      
+      container.innerHTML = '';
+
+      filteredList.forEach((q, idx) => {
+        const state = codeExamAnswers[q.id] || { code: q.initialCode, passed: false, message: '', userResult: null, showHint: false };
+
+        const card = document.createElement('div');
+        card.className = `bg-slate-800 border ${state.passed ? 'border-emerald-500/80' : (state.message ? 'border-rose-500/80' : 'border-slate-700')} rounded-xl p-5 shadow-lg space-y-4 transition-all`;
+
+        card.innerHTML = `
+          <div class="flex items-start justify-between gap-4 border-b border-slate-700/80 pb-3">
+            <div class="flex items-center space-x-3">
+              <span class="bg-slate-700 text-sky-400 font-mono text-xs font-bold px-2.5 py-1 rounded-md">ข้อที่ ${idx + 1}</span>
+              <span class="text-xs text-slate-400 uppercase tracking-wider bg-slate-900 px-2 py-0.5 rounded border border-slate-700">${q.category === 'ch3' ? 'Chapter 3' : 'Chapter 4'}</span>
+            </div>
+            <div>
+              ${state.passed 
+                ? '<span class="text-xs font-bold text-emerald-400 bg-emerald-950/80 border border-emerald-500/50 px-3 py-1 rounded-full flex items-center"><i class="fa-solid fa-circle-check mr-1.5"></i> ผ่านการตรวจ (Passed)</span>' 
+                : '<span class="text-xs text-amber-400 bg-amber-950/50 border border-amber-500/40 px-2.5 py-1 rounded-full flex items-center"><i class="fa-solid fa-hourglass-half mr-1.5"></i> รอทำโจทย์</span>'}
+            </div>
+          </div>
+
+          <div>
+            <h3 class="text-base font-semibold text-slate-100 leading-snug">${q.title}</h3>
+            <p class="text-xs text-slate-300 mt-1 leading-relaxed">${q.description}</p>
+          </div>
+
+          <!-- Code Editor Area -->
+          <div class="space-y-2">
+            <div class="flex justify-between items-center text-xs text-slate-400">
+              <span class="font-mono text-emerald-400"><i class="fa-solid fa-terminal mr-1"></i>พิมพ์คำสั่ง SQL ของคุณ:</span>
+              <button onclick="toggleCodeHint('${q.id}')" class="text-xs text-sky-400 hover:underline">
+                <i class="fa-solid fa-lightbulb mr-1 text-amber-400"></i>${state.showHint ? 'ซ่อนคำแนะนำ' : 'ดูคำแนะนำ (Hint)'}
+              </button>
+            </div>
+
+            ${state.showHint ? `
+              <div class="p-3 bg-amber-950/40 border border-amber-500/30 rounded-lg text-xs text-amber-200">
+                <i class="fa-solid fa-info-circle mr-1"></i><strong>Hint:</strong> ${q.hint}
+              </div>
+            ` : ''}
+
+            <textarea id="editor-${q.id}" class="w-full bg-slate-950 text-emerald-400 font-mono text-xs sm:text-sm p-3.5 rounded-lg border border-slate-700 focus:ring-2 focus:ring-brand-500 focus:outline-none resize-y min-h-[90px]" placeholder="SELECT ...">${escapeHtml(state.code)}</textarea>
+            
+            <div class="flex items-center justify-between pt-1">
+              <button onclick="runCodeExamCheck('${q.id}')" class="text-xs bg-emerald-600 hover:bg-emerald-500 text-white font-medium px-4 py-2 rounded-lg shadow-md transition flex items-center">
+                <i class="fa-solid fa-paper-plane mr-1.5"></i>ส่งตรวจคำตอบ (Submit)
+              </button>
+              <button onclick="testInSandbox(document.getElementById('editor-${q.id}').value)" class="text-xs text-slate-400 hover:text-slate-200 px-2 py-1">
+                <i class="fa-solid fa-flask mr-1"></i>ไปลองใน Sandbox
+              </button>
+            </div>
+          </div>
+
+          <!-- Evaluation Feedback & Table Output -->
+          ${state.message ? `
+            <div class="p-3 rounded-lg text-xs font-mono border ${state.passed ? 'bg-emerald-950/60 border-emerald-500/50 text-emerald-300' : 'bg-rose-950/60 border-rose-500/50 text-rose-300'}">
+              <div class="font-bold flex items-center mb-1">
+                <i class="fa-solid ${state.passed ? 'fa-check-circle text-emerald-400' : 'fa-triangle-exclamation text-rose-400'} mr-1.5"></i>
+                ${state.passed ? 'คำตอบถูกต้อง! (Correct Answer)' : 'คำตอบยังไม่ถูกต้อง (Needs Improvement)'}
+              </div>
+              <p class="text-slate-300">${escapeHtml(state.message)}</p>
+            </div>
+          ` : ''}
+
+          ${state.userResult && Array.isArray(state.userResult) && state.userResult.length > 0 ? `
+            <div class="mt-2 space-y-1">
+              <span class="text-[11px] text-slate-400 font-mono">ผลลัพธ์จากคำสั่งของคุณ (${state.userResult.length} แถว):</span>
+              <div class="overflow-x-auto rounded-lg border border-slate-700 bg-slate-950">
+                ${renderTableHTML(state.userResult)}
+              </div>
+            </div>
+          ` : ''}
+        `;
+
+        container.appendChild(card);
+      });
+
+      updateCodeExamScoreBoard();
+    }
+
+    function toggleCodeHint(qId) {
+      if(!codeExamAnswers[qId]) {
+        codeExamAnswers[qId] = { code: codingQuestions.find(q => q.id === qId).initialCode, passed: false, message: '', userResult: null, showHint: true };
+      } else {
+        codeExamAnswers[qId].showHint = !codeExamAnswers[qId].showHint;
+      }
+      renderCodeExam();
+    }
+
+    function runCodeExamCheck(qId) {
+      const q = codingQuestions.find(item => item.id === qId);
+      const editorElem = document.getElementById(`editor-${qId}`);
+      if(!q || !editorElem) return;
+
+      const userSql = editorElem.value.trim();
+      let passed = false;
+      let message = "";
+      let userResult = null;
+
+      if(!userSql) {
+        codeExamAnswers[qId] = {
+          code: userSql,
+          passed: false,
+          message: "กรุณากรอกคำสั่ง SQL ก่อนกดส่งตรวจ",
+          userResult: null,
+          showHint: codeExamAnswers[qId]?.showHint || false
+        };
+        renderCodeExam();
+        return;
+      }
+
+      try {
+        // Execute User Query
+        userResult = alasql(userSql);
+
+        // Execute Expected Query
+        const expectedResult = alasql(q.expectedQuery);
+
+        // Auto-grader Comparison Logic
+        if (!Array.isArray(userResult)) {
+          passed = false;
+          message = "คำสั่งทำงานสำเร็จแต่ไม่ได้คืนค่าผลลัพธ์เป็นตาราง";
+        } else {
+          // Compare row count
+          if (userResult.length !== expectedResult.length) {
+            passed = false;
+            message = `จำนวนแถวที่ได้ (${userResult.length} แถว) ไม่ตรงกับผลลัพธ์ที่ถูกต้อง (${expectedResult.length} แถว)`;
+          } else if (userResult.length === 0) {
+            passed = true;
+            message = "ถูกต้อง! ได้ผลลัพธ์ 0 แถวตรงตามโจทย์";
+          } else {
+            // Compare keys (columns)
+            const userKeys = Object.keys(userResult[0]).map(k => k.toLowerCase()).sort();
+            const expectedKeys = Object.keys(expectedResult[0]).map(k => k.toLowerCase()).sort();
+
+            if (JSON.stringify(userKeys) !== JSON.stringify(expectedKeys)) {
+              passed = false;
+              message = `ชื่อคอลัมน์ไม่ตรงกัน (ของคุณ: ${userKeys.join(', ')} | ที่ถูกต้อง: ${expectedKeys.join(', ')})`;
+            } else {
+              // Deep compare row JSON values (order independent sort attempt)
+              const normalize = arr => JSON.stringify(arr.map(r => {
+                const sortedObj = {};
+                Object.keys(r).sort().forEach(k => sortedObj[k.toLowerCase()] = r[k]);
+                return sortedObj;
+              }).sort((a,b) => JSON.stringify(a).localeCompare(JSON.stringify(b))));
+
+              if (normalize(userResult) === normalize(expectedResult)) {
+                passed = true;
+                message = "ยอดเยี่ยม! ข้อมูลและคอลัมน์ถูกต้องครบถ้วนตรงตามโจทย์ทุกประการ";
+              } else {
+                passed = false;
+                message = "คอลัมน์ครบถ้วน แต่ค่าข้อมูลในตารางยังไม่ถูกต้อง กรุณาตรวจสอบเงื่อนไข WHERE หรือ JOIN อีกครั้ง";
+              }
+            }
+          }
+        }
+      } catch (err) {
+        passed = false;
+        message = `SQL Error: ${err.message}`;
+      }
+
+      codeExamAnswers[qId] = {
+        code: userSql,
+        passed: passed,
+        message: message,
+        userResult: userResult,
+        showHint: codeExamAnswers[qId]?.showHint || false
+      };
+
+      renderCodeExam();
+    }
+
+    function filterCodeExam() {
+      renderCodeExam();
+    }
+
+    function resetCodeExam() {
+      codeExamAnswers = {};
+      renderCodeExam();
+    }
+
+    function updateCodeExamScoreBoard() {
+      let score = 0;
+      let total = codingQuestions.length;
+      Object.keys(codeExamAnswers).forEach(qId => {
+        if (codeExamAnswers[qId].passed) score++;
+      });
+
+      document.getElementById('code-exam-progress-text').innerText = `${Object.keys(codeExamAnswers).length} / ${total}`;
+      document.getElementById('code-exam-score-text').innerText = `${score} คะแนน`;
+    }
+
+    function renderQuiz() {
+      const container = document.getElementById('quiz-container');
+      const filter = document.getElementById('quiz-filter').value;
+      
+      const filteredList = quizQuestions.filter(q => filter === 'all' || q.category === filter);
+      
+      container.innerHTML = '';
+
+      filteredList.forEach((q, idx) => {
+        const isAnswered = userAnswers[q.id] !== undefined;
+        const selectedOpt = userAnswers[q.id];
+        const isCorrect = selectedOpt === q.answer;
+
+        const card = document.createElement('div');
+        card.className = `bg-slate-800 border ${isAnswered ? (isCorrect ? 'border-emerald-500/50' : 'border-rose-500/50') : 'border-slate-700'} rounded-xl p-5 shadow-lg space-y-4 transition-all`;
+
+        let optionsHTML = '';
+        q.options.forEach((opt, optIdx) => {
+          let btnClass = "bg-slate-900 border border-slate-700 text-slate-300 hover:bg-slate-750 hover:border-slate-500";
+          
+          if(isAnswered) {
+            if(optIdx === q.answer) {
+              btnClass = "bg-emerald-950/80 border border-emerald-500 text-emerald-200 font-medium";
+            } else if(selectedOpt === optIdx) {
+              btnClass = "bg-rose-950/80 border border-rose-500 text-rose-200 font-medium";
+            } else {
+              btnClass = "bg-slate-900 border border-slate-800 text-slate-500 opacity-50";
+            }
+          }
+
+          optionsHTML += `
+            <button 
+              onclick="selectOption(${q.id}, ${optIdx})" 
+              ${isAnswered ? 'disabled' : ''} 
+              class="w-full text-left p-3 rounded-lg text-sm flex items-center justify-between transition-all ${btnClass}">
+              <span>${String.fromCharCode(65 + optIdx)}. ${escapeHtml(opt)}</span>
+              ${isAnswered && optIdx === q.answer ? '<i class="fa-solid fa-circle-check text-emerald-400 text-lg"></i>' : ''}
+              ${isAnswered && selectedOpt === optIdx && !isCorrect ? '<i class="fa-solid fa-circle-xmark text-rose-400 text-lg"></i>' : ''}
+            </button>
+          `;
+        });
+
+        let explanationHTML = '';
+        if(isAnswered) {
+          explanationHTML = `
+            <div class="mt-4 p-4 rounded-lg bg-slate-900/90 border border-slate-700/80 text-xs space-y-2">
+              <div class="font-semibold text-sky-400 flex items-center">
+                <i class="fa-solid fa-lightbulb mr-2 text-amber-400"></i>คำอธิบาย & เฉลย:
+              </div>
+              <p class="text-slate-300 leading-relaxed">${q.explanation}</p>
+              <div class="pt-2 flex items-center justify-between border-t border-slate-800">
+                <span class="text-slate-500 font-mono">SQL Hint: ${q.sqlHint}</span>
+                <button onclick="testInSandbox('${escapeJsString(q.sqlHint)}')" class="text-xs bg-brand-600 hover:bg-brand-500 text-white px-2.5 py-1 rounded transition">
+                  <i class="fa-solid fa-flask mr-1"></i>ทดลองคำสั่งนี้ใน Sandbox
+                </button>
+              </div>
+            </div>
+          `;
+        }
+
+        card.innerHTML = `
+          <div class="flex items-start justify-between gap-4">
+            <div class="flex items-center space-x-3">
+              <span class="bg-slate-700 text-sky-400 font-mono text-xs font-bold px-2.5 py-1 rounded-md">ข้อที่ ${idx + 1}</span>
+              <span class="text-xs text-slate-400 uppercase tracking-wider bg-slate-900 px-2 py-0.5 rounded border border-slate-700">${q.category === 'ch3' ? 'Chapter 3' : 'Chapter 4'}</span>
+            </div>
+            ${isAnswered ? (isCorrect ? '<span class="text-xs font-bold text-emerald-400 bg-emerald-950/60 border border-emerald-500/40 px-2.5 py-1 rounded-full">ถูกต้อง (+1)</span>' : '<span class="text-xs font-bold text-rose-400 bg-rose-950/60 border border-rose-500/40 px-2.5 py-1 rounded-full">ตอบผิด (0)</span>') : ''}
+          </div>
+          <h3 class="text-base font-semibold text-slate-100 leading-snug">${q.title}</h3>
+          <div class="space-y-2 pt-1">
+            ${optionsHTML}
+          </div>
+          ${explanationHTML}
+        `;
+
+        container.appendChild(card);
+      });
+
+      updateScoreBoard();
+    }
+
+    function selectOption(qId, optIdx) {
+      userAnswers[qId] = optIdx;
+      renderQuiz();
+    }
+
+    function filterQuiz() {
+      renderQuiz();
+    }
+
+    function resetQuiz() {
+      userAnswers = {};
+      renderQuiz();
+    }
+
+    function updateScoreBoard() {
+      const answeredCount = Object.keys(userAnswers).length;
+      let score = 0;
+      Object.keys(userAnswers).forEach(qId => {
+        const q = quizQuestions.find(item => item.id == qId);
+        if(q && userAnswers[qId] === q.answer) score++;
+      });
+
+      document.getElementById('quiz-progress-text').innerText = `${answeredCount} / ${quizQuestions.length}`;
+      document.getElementById('quiz-score-text').innerText = `${score} คะแนน`;
+    }
+
+    function testInSandbox(sql) {
+      switchTab('sandbox');
+      setQuery(sql);
+      runCustomQuery();
+    }
+
+    function setQuery(sql) {
+      document.getElementById('sql-editor').value = sql;
+    }
+
+    function clearEditor() {
+      document.getElementById('sql-editor').value = '';
+      document.getElementById('query-result').innerHTML = '<p class="text-slate-500 italic p-4 text-center">กด Execute SQL เพื่อดูผลลัพธ์คำสั่ง</p>';
+    }
+
+    function runCustomQuery() {
+      const sql = document.getElementById('sql-editor').value.trim();
+      const outputDiv = document.getElementById('query-result');
+
+      if(!sql) {
+        outputDiv.innerHTML = '<p class="text-amber-400 p-4">กรุณากรอกคำสั่ง SQL ก่อนกด Execute</p>';
+        return;
+      }
+
+      try {
+        const startTime = performance.now();
+        const res = alasql(sql);
+        const endTime = performance.now();
+        const duration = (endTime - startTime).toFixed(2);
+
+        if(Array.isArray(res)) {
+          if(res.length === 0) {
+            outputDiv.innerHTML = `
+              <div class="p-3 text-slate-400 text-xs flex justify-between items-center border-b border-slate-800 mb-2">
+                <span>Query OK, 0 rows returned</span>
+                <span class="text-slate-500 font-mono">${duration} ms</span>
+              </div>
+              <p class="text-slate-500 italic p-4 text-center">ไม่พบข้อมูลตรงตามเงื่อนไข (Empty result set)</p>
+            `;
+          } else {
+            outputDiv.innerHTML = `
+              <div class="p-2 text-emerald-400 text-xs flex justify-between items-center border-b border-slate-800 mb-2 font-mono">
+                <span><i class="fa-solid fa-check-circle mr-1"></i>Query Successful (${res.length} rows)</span>
+                <span class="text-slate-500">${duration} ms</span>
+              </div>
+              ${renderTableHTML(res)}
+            `;
+          }
+        } else if(typeof res === 'number') {
+          outputDiv.innerHTML = `
+            <div class="p-4 text-emerald-400 font-mono text-sm">
+              <i class="fa-solid fa-circle-check mr-2"></i>คำสั่งทำงานสำเร็จ (Affected rows / Result: <strong>${res}</strong>)
+            </div>
+          `;
+        } else {
+          outputDiv.innerHTML = `
+            <div class="p-4 text-slate-300 font-mono text-xs">
+              Result: ${JSON.stringify(res)}
+            </div>
+          `;
+        }
+      } catch (err) {
+        outputDiv.innerHTML = `
+          <div class="p-4 bg-rose-950/60 border border-rose-500/50 rounded-lg text-rose-300 font-mono text-xs space-y-1">
+            <div class="font-bold text-rose-400"><i class="fa-solid fa-triangle-exclamation mr-1.5"></i>SQL Syntax Error / Execution Failed</div>
+            <div class="text-slate-300 leading-relaxed">${escapeHtml(err.message)}</div>
+          </div>
+        `;
+      }
+    }
+
+    function renderAllTables() {
+      const container = document.getElementById('tables-container');
+      container.innerHTML = '';
+
+      const tables = ['Persons', 'Orders', 'Products', 'student'];
+
+      tables.forEach(tblName => {
+        try {
+          const data = alasql(`SELECT * FROM ${tblName}`);
+          
+          const section = document.createElement('div');
+          section.className = 'bg-slate-800 border border-slate-700 rounded-xl p-4 shadow-lg space-y-3';
+
+          section.innerHTML = `
+            <div class="flex items-center justify-between">
+              <div class="flex items-center space-x-2">
+                <i class="fa-solid fa-table text-sky-400"></i>
+                <h3 class="font-bold text-slate-100 text-base">${tblName}</h3>
+                <span class="text-xs bg-slate-900 text-slate-400 px-2 py-0.5 rounded border border-slate-700 font-mono">${data.length} rows</span>
+              </div>
+              <button onclick="testInSandbox('SELECT * FROM ${tblName};')" class="text-xs bg-slate-700 hover:bg-slate-600 text-slate-200 px-2.5 py-1 rounded transition">
+                <i class="fa-solid fa-terminal mr-1"></i>Query ตารางนี้
+              </button>
+            </div>
+            <div class="overflow-x-auto rounded-lg border border-slate-700 bg-slate-950">
+              ${renderTableHTML(data)}
+            </div>
+          `;
+
+          container.appendChild(section);
+        } catch(e) {
+          console.error(e);
+        }
+      });
+    }
+
+    function renderTableHTML(arr) {
+      if(!arr || arr.length === 0) return '<p class="text-slate-500 p-2 text-xs">No Data</p>';
+
+      const keys = Object.keys(arr[0]);
+      
+      let headHTML = keys.map(k => `<th class="p-2.5 text-left text-xs font-semibold text-slate-300 uppercase tracking-wider bg-slate-900 border-b border-slate-800 font-mono">${escapeHtml(k)}</th>`).join('');
+      
+      let rowsHTML = arr.map((row, idx) => {
+        let cols = keys.map(k => {
+          let val = row[k];
+          let displayVal = val === null || val === undefined ? '<span class="text-rose-400/80 italic font-mono text-[11px]">NULL</span>' : escapeHtml(String(val));
+          return `<td class="p-2.5 text-xs text-slate-300 border-b border-slate-800/60 font-mono whitespace-nowrap">${displayVal}</td>`;
+        }).join('');
+        return `<tr class="${idx % 2 === 0 ? 'bg-slate-950' : 'bg-slate-900/50'} hover:bg-slate-800/50 transition">${cols}</tr>`;
+      }).join('');
+
+      return `
+        <table class="w-full text-left border-collapse">
+          <thead><tr>${headHTML}</tr></thead>
+          <tbody>${rowsHTML}</tbody>
+        </table>
+      `;
+    }
+
+    function escapeHtml(str) {
+      if(!str) return '';
+      return String(str).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#039;");
+    }
+
+    function escapeJsString(str) {
+      if(!str) return '';
+      return String(str).replace(/\\/g, '\\\\').replace(/'/g, "\\'").replace(/"/g, '\\"');
+    }
+
+    window.onload = function() {
+      initDatabase();
+      renderCodeExam();
+    };
+  </script>
+</body>
+</html>
